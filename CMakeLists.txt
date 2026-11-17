@@ -52,7 +52,10 @@ add_darling_executable(sleep sleep/sleep.c)
 add_darling_executable(systime systime/systime.c)
 add_darling_executable(tee tee/tee.c)
 add_darling_executable(test-bin test/test.c)
-set_target_properties(test-bin PROPERTIES OUTPUT_NAME test)
+# The executable is installed as `test`. CMake would normally use OUTPUT_NAME
+# for that, but a target output named `test` collides with the `test` utility
+# target that enables ctest, which Ninja rejects. Keep a distinct build output
+# name and rename the file during installation instead.
 add_darling_executable(time time/time.c)
 add_darling_executable(uname uname/uname.c)
 add_darling_executable(users users/users.c)
@@ -73,8 +76,6 @@ add_darling_executable(jot jot/jot.c)
 add_darling_executable(id id/id.c)
 add_darling_executable(lastcomm lastcomm/lastcomm.c)
 add_darling_executable(logname logname/logname.c)
-add_darling_executable(login-tool login/login.c)
-set_target_properties(login-tool PROPERTIES OUTPUT_NAME login)
 add_darling_executable(path_helper path_helper/path_helper.c)
 add_darling_executable(expr ${CMAKE_CURRENT_BINARY_DIR}/expr.c)
 
@@ -87,13 +88,14 @@ if (COMPONENT_cli_extra)
 	set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME "cli")
 endif()
 
-install(TARGETS date echo pwd kill sleep expr test-bin
+install(TARGETS date echo pwd kill sleep expr
 	DESTINATION libexec/darling/bin)
+install(PROGRAMS $<TARGET_FILE:test-bin>
+	DESTINATION libexec/darling/bin RENAME test)
 
 install(TARGETS env which basename dirname apply nohup getopt true false killall mktemp
 	nice printenv printf renice script seq systime shlock id
 	tee time uname jot lastcomm logname
-	login-tool
 	users what whereis xargs find hexdump hostname yes who
 	DESTINATION libexec/darling/usr/bin)
 
@@ -102,9 +104,9 @@ install(TARGETS path_helper DESTINATION libexec/darling/usr/libexec
 
 install(TARGETS chroot DESTINATION libexec/darling/usr/sbin)
 
-InstallSymlink(hexdump ${CMAKE_INSTALL_PREFIX}/libexec/darling/usr/bin/od)
-InstallSymlink(id ${CMAKE_INSTALL_PREFIX}/libexec/darling/usr/bin/groups)
-InstallSymlink(id ${CMAKE_INSTALL_PREFIX}/libexec/darling/usr/bin/whoami)
+InstallSymlink(hexdump libexec/darling/usr/bin/od)
+InstallSymlink(id libexec/darling/usr/bin/groups)
+InstallSymlink(id libexec/darling/usr/bin/whoami)
 
 set(man1
 	alias/alias.1
